@@ -105,16 +105,19 @@ ts-safe-path/
 We welcome several types of contributions:
 
 #### 🐛 **Bug Reports**
+
 - Found a bug? Please check existing issues first
 - Provide detailed reproduction steps
 - Include TypeScript version and environment details
 
 #### ✨ **Feature Requests**
+
 - Suggest new features or improvements
 - Explain the use case and benefits
 - Consider backward compatibility
 
 #### 🔧 **Code Contributions**
+
 - Bug fixes
 - Performance improvements
 - New features
@@ -122,6 +125,7 @@ We welcome several types of contributions:
 - Test coverage improvements
 
 #### 📚 **Documentation**
+
 - Fix typos or improve clarity
 - Add examples or use cases
 - Improve API documentation
@@ -130,6 +134,7 @@ We welcome several types of contributions:
 ### What We're Looking For
 
 **High Priority:**
+
 - Performance optimizations
 - TypeScript type improvements
 - Bug fixes
@@ -137,11 +142,13 @@ We welcome several types of contributions:
 - Documentation enhancements
 
 **Medium Priority:**
+
 - New utility functions
 - Developer experience improvements
 - Build process optimizations
 
 **Please Discuss First:**
+
 - Breaking changes
 - Major architectural changes
 - New dependencies
@@ -157,6 +164,7 @@ We welcome several types of contributions:
 ### Step-by-Step Process
 
 1. **Create a feature branch** from `main`:
+
    ```bash
    git checkout -b feature/your-feature-name
    # or
@@ -166,6 +174,7 @@ We welcome several types of contributions:
 2. **Make your changes** following our coding standards
 
 3. **Add tests** for new functionality:
+
    ```bash
    npm test
    ```
@@ -173,12 +182,14 @@ We welcome several types of contributions:
 4. **Update documentation** if needed
 
 5. **Lint and type-check** your code:
+
    ```bash
    npm run lint
    npm run type-check
    ```
 
 6. **Commit your changes** with a clear message:
+
    ```bash
    git commit -m "feat: add new utility function for path validation"
    # or
@@ -186,6 +197,7 @@ We welcome several types of contributions:
    ```
 
 7. **Push to your fork**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -195,7 +207,9 @@ We welcome several types of contributions:
 ### Pull Request Guidelines
 
 #### Title Format
+
 Use conventional commit format:
+
 - `feat: add new feature`
 - `fix: resolve bug in path parsing`
 - `docs: update API documentation`
@@ -204,22 +218,27 @@ Use conventional commit format:
 - `refactor: simplify type definitions`
 
 #### Description Template
+
 ```markdown
 ## Description
+
 Brief description of the changes.
 
 ## Type of Change
+
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Tests pass locally
 - [ ] Added tests for new functionality
 - [ ] Updated existing tests if needed
 
 ## Checklist
+
 - [ ] Code follows project style guidelines
 - [ ] Self-review completed
 - [ ] Documentation updated
@@ -234,7 +253,7 @@ Brief description of the changes.
 // ✅ Good: Use explicit types for public APIs
 export function getValueByPath<
   T extends Record<string, any>,
-  P extends PathKeys<T>
+  P extends PathKeys<T>,
 >(obj: T, path: P): PathValue<T, P> | undefined {
   // Implementation
 }
@@ -272,13 +291,13 @@ export function getValue(obj: any, path: any): any {
  */
 export function getValueByPath<
   T extends Record<string, any>,
-  P extends PathKeys<T>
+  P extends PathKeys<T>,
 >(obj: T, path: P): PathValue<T, P> | undefined {
   const keys = parsePath(path as string);
   let result: any = obj;
 
   for (const key of keys) {
-    if (result == null || typeof result !== 'object') {
+    if (result == null || typeof result !== "object") {
       return undefined;
     }
     result = result[key];
@@ -293,6 +312,7 @@ export function getValueByPath<
 ### Test Structure
 
 We use Jest with TypeScript. Tests should be:
+
 - **Descriptive** - test names should clearly describe what's being tested
 - **Isolated** - each test should be independent
 - **Comprehensive** - cover happy paths, edge cases, and error conditions
@@ -300,27 +320,27 @@ We use Jest with TypeScript. Tests should be:
 ### Writing Tests
 
 ```typescript
-describe('safePath', () => {
-  describe('get method', () => {
-    it('should return value for valid nested path', () => {
-      const obj = { user: { name: 'John' } };
+describe("safePath", () => {
+  describe("get method", () => {
+    it("should return value for valid nested path", () => {
+      const obj = { user: { name: "John" } };
       const sp = safePath(obj);
-      
-      expect(sp.get('user.name')).toBe('John');
+
+      expect(sp.get("user.name")).toBe("John");
     });
 
-    it('should return undefined for non-existent path', () => {
-      const obj = { user: { name: 'John' } };
+    it("should return undefined for non-existent path", () => {
+      const obj = { user: { name: "John" } };
       const sp = safePath(obj);
-      
-      expect(sp.get('user.email' as any)).toBeUndefined();
+
+      expect(sp.get("user.email" as any)).toBeUndefined();
     });
 
-    it('should handle null intermediate values', () => {
+    it("should handle null intermediate values", () => {
       const obj = { user: null };
       const sp = safePath(obj);
-      
-      expect(sp.get('user.name' as any)).toBeUndefined();
+
+      expect(sp.get("user.name" as any)).toBeUndefined();
     });
   });
 });
@@ -365,6 +385,7 @@ npm test -- --testNamePattern="should get nested values"
 ### README Updates
 
 When adding features:
+
 - Add examples to appropriate sections
 - Update API reference table
 - Add performance notes if relevant
@@ -375,6 +396,7 @@ When adding features:
 ### Bug Reports
 
 Please include:
+
 - **Clear description** of the issue
 - **Steps to reproduce** the bug
 - **Expected vs actual behavior**
@@ -383,12 +405,13 @@ Please include:
 
 #### Bug Report Template
 
-```markdown
+````markdown
 **Describe the bug**
 A clear description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. Create object with structure '...'
 2. Call safePath method '...'
 3. See error
@@ -397,17 +420,23 @@ Steps to reproduce the behavior:
 What you expected to happen.
 
 **Code sample**
+
 ```typescript
-const obj = { /* ... */ };
+const obj = {
+  /* ... */
+};
 const sp = safePath(obj);
 // Code that demonstrates the issue
 ```
+````
 
 **Environment**
+
 - OS: [e.g. macOS 12.0]
 - Node.js: [e.g. 18.0.0]
 - TypeScript: [e.g. 4.8.0]
 - ts-safe-path: [e.g. 1.0.0]
+
 ```
 
 ### Feature Requests
@@ -456,3 +485,4 @@ If you have questions about contributing, feel free to:
 Thank you for contributing to ts-safe-path! 🎉
 
 Your contributions help make TypeScript development safer and more enjoyable for everyone.
+```

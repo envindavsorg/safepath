@@ -2,20 +2,20 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: "22"
 
 jobs:
   lint:
-      name: Code quality
-      runs-on: ubuntu-latest
-      permissions:
-        contents: read
+    name: Code quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
-      steps:
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -45,7 +45,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
