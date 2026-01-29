@@ -1,6 +1,6 @@
 {
   "name": "@envindavsorg/ts-safe-path",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Type-safe nested object access and manipulation for TypeScript 🚀",
   "packageManager": "pnpm@10.28.2",
   "main": "dist/index.js",
