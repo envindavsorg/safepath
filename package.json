@@ -8,8 +8,8 @@
 	"scripts": {
 		"build": "tsc",
 		"typecheck": "tsc --noEmit",
-		"test": "jest",
-		"test:watch": "jest --watch",
+		"test": "NODE_OPTIONS='--localstorage-file=.jest-local-storage' jest",
+		"test:watch": "NODE_OPTIONS='--localstorage-file=.jest-local-storage' jest --watch",
 		"prepublishOnly": "npm run build && npm test",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write ."
@@ -40,8 +40,8 @@
 	"homepage": "https://github.com/envindavsorg/ts-safe-path#readme",
 	"devDependencies": {
 		"@biomejs/biome": "2.3.13",
-		"@types/jest": "^30.0.0",
-		"jest": "^30.2.0",
+		"@types/jest": "^29.5.14",
+		"jest": "^29.7.0",
 		"ts-jest": "^29.4.6",
 		"typescript": "^5.9.3"
 	},

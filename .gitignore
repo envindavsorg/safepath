@@ -19,6 +19,9 @@ coverage/
 # nyc test coverage
 .nyc_output
 
+# Jest local storage
+.jest-local-storage
+
 # Environment variables
 .env
 .env.local
