@@ -1,63 +1,63 @@
 {
-  "name": "@envindavsorg/ts-safe-path",
-  "version": "1.0.10",
-  "description": "Type-safe nested object access and manipulation for TypeScript 🚀",
-  "packageManager": "pnpm@10.28.2",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "prepublishOnly": "npm run build && npm test",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write ."
-  },
-  "keywords": [
-    "typescript",
-    "type-safe",
-    "object",
-    "nested",
-    "path",
-    "lodash",
-    "get",
-    "set",
-    "utility"
-  ],
-  "author": "Cuzeac Florin",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/envindavsorg/ts-safe-path.git"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
-  "bugs": {
-    "url": "https://github.com/envindavsorg/ts-safe-path/issues"
-  },
-  "homepage": "https://github.com/envindavsorg/ts-safe-path#readme",
-  "devDependencies": {
-    "@biomejs/biome": "2.3.13",
-    "@types/jest": "^30.0.0",
-    "jest": "^30.2.0",
-    "ts-jest": "^29.4.6",
-    "typescript": "^5.9.3"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "engines": {
-    "node": ">=14.0.0"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/tests/**/*.test.ts"
-    ]
-  }
+	"name": "@envindavsorg/ts-safe-path",
+	"version": "1.0.10",
+	"description": "Type-safe nested object access and manipulation for TypeScript 🚀",
+	"packageManager": "pnpm@10.28.2",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"prepublishOnly": "npm run build && npm test",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write ."
+	},
+	"keywords": [
+		"typescript",
+		"type-safe",
+		"object",
+		"nested",
+		"path",
+		"lodash",
+		"get",
+		"set",
+		"utility"
+	],
+	"author": "Cuzeac Florin",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/envindavsorg/ts-safe-path.git"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"bugs": {
+		"url": "https://github.com/envindavsorg/ts-safe-path/issues"
+	},
+	"homepage": "https://github.com/envindavsorg/ts-safe-path#readme",
+	"devDependencies": {
+		"@biomejs/biome": "2.3.13",
+		"@types/jest": "^30.0.0",
+		"jest": "^30.2.0",
+		"ts-jest": "^29.4.6",
+		"typescript": "^5.9.3"
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=14.0.0"
+	},
+	"jest": {
+		"preset": "ts-jest",
+		"testEnvironment": "node",
+		"testMatch": [
+			"**/tests/**/*.test.ts"
+		]
+	}
 }
