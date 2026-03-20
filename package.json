@@ -8,11 +8,13 @@
 	"scripts": {
 		"build": "tsc",
 		"typecheck": "tsc --noEmit",
-		"test": "NODE_OPTIONS='--localstorage-file=.jest-local-storage' jest",
-		"test:watch": "NODE_OPTIONS='--localstorage-file=.jest-local-storage' jest --watch",
+		"test": "jest",
+		"test:watch": "jest --watch",
 		"prepublishOnly": "npm run build && npm test",
-		"lint": "biome check .",
-		"lint:fix": "biome check --write ."
+		"lint": "oxlint",
+		"lint:fix": "oxlint --fix",
+		"format": "oxfmt --write src tests",
+		"format:check": "oxfmt src tests"
 	},
 	"keywords": [
 		"typescript",
@@ -39,9 +41,10 @@
 	},
 	"homepage": "https://github.com/envindavsorg/ts-safe-path#readme",
 	"devDependencies": {
-		"@biomejs/biome": "2.3.13",
 		"@types/jest": "^29.5.14",
 		"jest": "^29.7.0",
+		"oxfmt": "^0.41.0",
+		"oxlint": "^1.56.0",
 		"ts-jest": "^29.4.6",
 		"typescript": "^5.9.3"
 	},
@@ -51,7 +54,7 @@
 		"LICENSE"
 	],
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=18.0.0"
 	},
 	"jest": {
 		"preset": "ts-jest",

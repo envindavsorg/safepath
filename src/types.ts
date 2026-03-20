@@ -11,10 +11,6 @@ export type PathValue<
 		? T[P]
 		: never;
 
-export type PathArray<P extends string> = P extends `${infer K}.${infer Rest}`
-	? [K, ...PathArray<Rest>]
-	: [P];
-
 export type PathKeys<T> =
 	T extends Record<string, unknown>
 		? {
@@ -34,10 +30,8 @@ export type DeepPartial<T> = T extends object
 
 export type SafePathOptions = {
 	immutable?: boolean;
-	cache?: boolean;
 };
 
 export type ValidatedSafePathOptions = SafePathOptions & {
-	validate?: boolean;
 	strict?: boolean;
 };

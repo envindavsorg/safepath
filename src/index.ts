@@ -21,37 +21,33 @@ export interface SafePath<T extends Record<string, unknown>> {
 	set<P extends PathKeys<T>>(
 		path: P,
 		value: PathValue<T, P>,
-		options?: SafePathOptions,
+		options?: SafePathOptions
 	): T;
 	has<P extends PathKeys<T>>(path: P): boolean;
 	delete<P extends PathKeys<T>>(path: P, options?: SafePathOptions): T;
 	update<P extends PathKeys<T>>(
 		path: P,
 		updater: (current: PathValue<T, P> | undefined) => PathValue<T, P>,
-		options?: SafePathOptions,
+		options?: SafePathOptions
 	): T;
 	merge(partial: DeepPartial<T>, options?: SafePathOptions): T;
 	getAllPaths(): PathKeys<T>[];
 	isValidPath(path: string): path is PathKeys<T>;
 	validate<P extends PathKeys<T>>(
 		path: P,
-		schema: SchemaValidator<PathValue<T, P>>,
+		schema: SchemaValidator<PathValue<T, P>>
 	): ValidationResult<PathValue<T, P>>;
 	validateAndSet<P extends PathKeys<T>>(
 		path: P,
 		value: unknown,
 		schema: SchemaValidator<PathValue<T, P>>,
-		options?: ValidatedSafePathOptions,
+		options?: ValidatedSafePathOptions
 	): T;
-	safeValidate<P extends PathKeys<T>>(
-		path: P,
-		schema: SchemaValidator<PathValue<T, P>>,
-	): ValidationResult<PathValue<T, P>>;
 }
 
 export const safePath = <T extends Record<string, unknown>>(
 	obj: T,
-	defaultOptions?: SafePathOptions,
+	defaultOptions?: SafePathOptions
 ): SafePath<T> => ({
 	get<P extends PathKeys<T>>(path: P): PathValue<T, P> | undefined {
 		return getValueByPath(obj, path);
@@ -60,7 +56,7 @@ export const safePath = <T extends Record<string, unknown>>(
 	set<P extends PathKeys<T>>(
 		path: P,
 		value: PathValue<T, P>,
-		options?: SafePathOptions,
+		options?: SafePathOptions
 	): T {
 		const opts = { ...defaultOptions, ...options };
 		if (opts?.immutable) {
@@ -86,7 +82,7 @@ export const safePath = <T extends Record<string, unknown>>(
 	update<P extends PathKeys<T>>(
 		path: P,
 		updater: (current: PathValue<T, P> | undefined) => PathValue<T, P>,
-		options?: SafePathOptions,
+		options?: SafePathOptions
 	): T {
 		const currentValue = getValueByPath(obj, path);
 		const newValue = updater(currentValue);
@@ -112,7 +108,7 @@ export const safePath = <T extends Record<string, unknown>>(
 
 	validate<P extends PathKeys<T>>(
 		path: P,
-		schema: SchemaValidator<PathValue<T, P>>,
+		schema: SchemaValidator<PathValue<T, P>>
 	): ValidationResult<PathValue<T, P>> {
 		const value = getValueByPath(obj, path);
 		return schema.validate(value);
@@ -122,7 +118,7 @@ export const safePath = <T extends Record<string, unknown>>(
 		path: P,
 		value: unknown,
 		schema: SchemaValidator<PathValue<T, P>>,
-		options?: ValidatedSafePathOptions,
+		options?: ValidatedSafePathOptions
 	): T {
 		const validationResult = schema.validate(value);
 
@@ -131,7 +127,7 @@ export const safePath = <T extends Record<string, unknown>>(
 				throw new Error(
 					`Validation failed for path "${path}": ${validationResult.errors
 						.map((e) => e.message)
-						.join(', ')}`,
+						.join(', ')}`
 				);
 			}
 			return obj;
@@ -139,20 +135,12 @@ export const safePath = <T extends Record<string, unknown>>(
 
 		return this.set(path, validationResult.data, options);
 	},
-
-	safeValidate<P extends PathKeys<T>>(
-		path: P,
-		schema: SchemaValidator<PathValue<T, P>>,
-	): ValidationResult<PathValue<T, P>> {
-		const value = getValueByPath(obj, path);
-		return schema.safeParse(value);
-	},
 });
 
 const deepMerge = <T extends Record<string, unknown>>(
 	target: T,
 	source: DeepPartial<T>,
-	immutable = false,
+	immutable = false
 ): T => {
 	const result = immutable ? structuredClone(target) : { ...target };
 
@@ -172,7 +160,7 @@ const deepMerge = <T extends Record<string, unknown>>(
 				(result as Record<string, unknown>)[key] = deepMerge(
 					targetValue as Record<string, unknown>,
 					sourceValue as DeepPartial<T>,
-					immutable,
+					immutable
 				);
 			} else if (sourceValue !== undefined) {
 				(result as Record<string, unknown>)[key] = sourceValue;
@@ -183,26 +171,26 @@ const deepMerge = <T extends Record<string, unknown>>(
 	return result;
 };
 
-export type {
-	PathKeys,
-	PathValue,
-	DeepPartial,
-	SafePathOptions,
-	ValidatedSafePathOptions,
-};
+export { s } from './schema';
 export type {
 	SchemaValidator,
 	ValidationError,
 	ValidationResult,
 } from './schema';
-export { s } from './schema';
+export type {
+	DeepPartial,
+	PathKeys,
+	PathValue,
+	SafePathOptions,
+	ValidatedSafePathOptions,
+};
 
 export {
-	getValueByPath,
-	setValueByPath,
-	hasPath,
-	deletePath,
-	isValidPath,
-	getAllPaths,
 	clearPathCache,
+	deletePath,
+	getAllPaths,
+	getValueByPath,
+	hasPath,
+	isValidPath,
+	setValueByPath,
 };

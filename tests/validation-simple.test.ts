@@ -46,7 +46,7 @@ describe('Schema Validation - Simple Tests', () => {
 		if (!invalidResult.success) {
 			expect(invalidResult.errors).toHaveLength(1);
 			expect(invalidResult.errors[0]?.message).toContain(
-				'Invalid email format',
+				'Invalid email format'
 			);
 		}
 	});
@@ -70,7 +70,9 @@ describe('Schema Validation - Simple Tests', () => {
 		expect(invalidResult.success).toBe(false);
 		if (!invalidResult.success) {
 			expect(invalidResult.errors.length).toBeGreaterThan(0);
-			expect(invalidResult.errors.some((e) => e.path === 'age')).toBe(true);
+			expect(invalidResult.errors.some((e) => e.path === 'age')).toBe(
+				true
+			);
 		}
 	});
 
@@ -88,7 +90,9 @@ describe('Schema Validation - Simple Tests', () => {
 		if (!invalidResult.success) {
 			expect(invalidResult.errors).toHaveLength(1);
 			expect(invalidResult.errors[0]?.path).toBe('[1]');
-			expect(invalidResult.errors[0]?.message).toContain('Expected string');
+			expect(invalidResult.errors[0]?.message).toContain(
+				'Expected string'
+			);
 		}
 	});
 
@@ -169,9 +173,14 @@ describe('SafePath Integration', () => {
 		const data = { user: { age: 25 } };
 		const safe = safePath(data);
 
-		const result = safe.validateAndSet('user.age', 'not-a-number', s.number(), {
-			strict: false,
-		});
+		const result = safe.validateAndSet(
+			'user.age',
+			'not-a-number',
+			s.number(),
+			{
+				strict: false,
+			}
+		);
 		expect(result.user.age).toBe(25); // unchanged
 	});
 });

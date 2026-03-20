@@ -3,16 +3,12 @@ import type { PathKeys, PathValue, SafePathOptions } from './types';
 const pathCache = new Map<string, string[]>();
 const MAX_CACHE_SIZE = 1000;
 
-const isValidObject = (value: unknown): value is Record<string, unknown> =>
-	value != null && typeof value === 'object' && !Array.isArray(value);
-
 const parsePath = (path: string): string[] => {
-	if (pathCache.has(path)) {
-		const cached = pathCache.get(path);
-		if (cached) {
-			return cached;
-		}
+	const cached = pathCache.get(path);
+	if (cached) {
+		return [...cached];
 	}
+
 	const keys = path.split('.');
 
 	if (pathCache.size >= MAX_CACHE_SIZE) {
@@ -23,7 +19,7 @@ const parsePath = (path: string): string[] => {
 	}
 
 	pathCache.set(path, keys);
-	return keys;
+	return [...keys];
 };
 
 export const getValueByPath = <
@@ -31,7 +27,7 @@ export const getValueByPath = <
 	P extends PathKeys<T>,
 >(
 	obj: T,
-	path: P,
+	path: P
 ): PathValue<T, P> | undefined => {
 	const keys = parsePath(path as string);
 	let result: unknown = obj;
@@ -54,17 +50,17 @@ export const setValueByPath = <
 	obj: T,
 	path: P,
 	value: PathValue<T, P>,
-	options?: SafePathOptions,
+	options?: SafePathOptions
 ): T => {
 	const keys = parsePath(path as string);
-	const lastKey = keys.pop();
+	const lastKey = keys[keys.length - 1];
 	if (!lastKey) {
 		return obj;
 	}
 	const target = options?.immutable ? structuredClone(obj) : obj;
 	let current: Record<string, unknown> = target;
 
-	for (let i = 0; i < keys.length; i++) {
+	for (let i = 0; i < keys.length - 1; i++) {
 		const key = keys[i];
 		if (!key) {
 			continue;
@@ -89,7 +85,7 @@ export const hasPath = <
 	P extends PathKeys<T>,
 >(
 	obj: T,
-	path: P,
+	path: P
 ): boolean => {
 	const keys = parsePath(path as string);
 	let current = obj;
@@ -116,17 +112,17 @@ export const deletePath = <
 >(
 	obj: T,
 	path: P,
-	options?: SafePathOptions,
+	options?: SafePathOptions
 ): T => {
 	const keys = parsePath(path as string);
-	const lastKey = keys.pop();
+	const lastKey = keys[keys.length - 1];
 	if (!lastKey) {
 		return obj;
 	}
 	const target = options?.immutable ? structuredClone(obj) : obj;
 	let current: unknown = target;
 
-	for (let i = 0; i < keys.length; i++) {
+	for (let i = 0; i < keys.length - 1; i++) {
 		const key = keys[i];
 		if (
 			!key ||
@@ -148,7 +144,7 @@ export const deletePath = <
 
 export const isValidPath = <T extends Record<string, unknown>>(
 	obj: T,
-	path: string,
+	path: string
 ): path is PathKeys<T> =>
 	typeof path === 'string' &&
 	path.length > 0 &&
@@ -156,7 +152,7 @@ export const isValidPath = <T extends Record<string, unknown>>(
 
 export const getAllPaths = <T extends Record<string, unknown>>(
 	obj: T,
-	prefix = '',
+	prefix = ''
 ): PathKeys<T>[] => {
 	const paths: string[] = [];
 	const stack: Array<{ obj: unknown; prefix: string }> = [{ obj, prefix }];
@@ -172,11 +168,18 @@ export const getAllPaths = <T extends Record<string, unknown>>(
 			const currentObj = current as Record<string, unknown>;
 			for (const key in currentObj) {
 				if (Object.hasOwn(currentObj, key)) {
-					const newPath = currentPrefix ? `${currentPrefix}.${key}` : key;
+					const newPath = currentPrefix
+						? `${currentPrefix}.${key}`
+						: key;
 					paths.push(newPath);
 
-					if (isValidObject(currentObj[key])) {
-						stack.push({ obj: currentObj[key], prefix: newPath });
+					const val = currentObj[key];
+					if (
+						val != null &&
+						typeof val === 'object' &&
+						!Array.isArray(val)
+					) {
+						stack.push({ obj: val, prefix: newPath });
 					}
 				}
 			}

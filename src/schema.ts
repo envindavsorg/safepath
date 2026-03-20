@@ -41,7 +41,7 @@ abstract class BaseValidator<T> implements SchemaValidator<T> {
 		const result = this.validate(data);
 		if (!result.success) {
 			throw new Error(
-				`Validation failed: ${result.errors.map((e) => `${e.path}: ${e.message}`).join(', ')}`,
+				`Validation failed: ${result.errors.map((e) => `${e.path}: ${e.message}`).join(', ')}`
 			);
 		}
 		return result.data;
@@ -84,7 +84,7 @@ abstract class BaseValidator<T> implements SchemaValidator<T> {
 	protected _handleResult<R>(
 		data: unknown,
 		_path: string,
-		validator: () => ValidationResult<R>,
+		validator: () => ValidationResult<R>
 	): ValidationResult<T> {
 		if (data === undefined && this._optional) {
 			return { success: true, data: undefined as T };
@@ -141,7 +141,10 @@ class StringValidator extends BaseValidator<string> {
 
 			const errors: ValidationError[] = [];
 
-			if (this._minLength !== undefined && data.length < this._minLength) {
+			if (
+				this._minLength !== undefined &&
+				data.length < this._minLength
+			) {
 				errors.push({
 					path,
 					message: `String must be at least ${this._minLength} characters`,
@@ -150,7 +153,10 @@ class StringValidator extends BaseValidator<string> {
 				});
 			}
 
-			if (this._maxLength !== undefined && data.length > this._maxLength) {
+			if (
+				this._maxLength !== undefined &&
+				data.length > this._maxLength
+			) {
 				errors.push({
 					path,
 					message: `String must be at most ${this._maxLength} characters`,
@@ -377,7 +383,7 @@ class ArrayValidator<T> extends BaseValidator<T[]> {
 						...result.errors.map((error) => ({
 							...error,
 							path: `${path}[${i}]${error.path ? `.${error.path}` : ''}`,
-						})),
+						}))
 					);
 				}
 			}
@@ -421,7 +427,7 @@ class ObjectValidator<
 				const validator = this.shape[key];
 				const keyPath = path ? `${path}.${key}` : key;
 				const validationResult = validator.validate(
-					(data as Record<string, unknown>)[key],
+					(data as Record<string, unknown>)[key]
 				);
 
 				if (validationResult.success) {
@@ -430,8 +436,10 @@ class ObjectValidator<
 					errors.push(
 						...validationResult.errors.map((error) => ({
 							...error,
-							path: error.path ? `${keyPath}.${error.path}` : keyPath,
-						})),
+							path: error.path
+								? `${keyPath}.${error.path}`
+								: keyPath,
+						}))
 					);
 				}
 			}
@@ -451,9 +459,7 @@ export const s = {
 	boolean: (): BooleanValidator => new BooleanValidator(),
 	array: <T>(elementValidator: SchemaValidator<T>): ArrayValidator<T> =>
 		new ArrayValidator(elementValidator),
-	object: <T extends Record<string, unknown>>(
-		shape: {
-			[K in keyof T]: SchemaValidator<T[K]>;
-		},
-	): ObjectValidator<T> => new ObjectValidator(shape),
+	object: <T extends Record<string, unknown>>(shape: {
+		[K in keyof T]: SchemaValidator<T[K]>;
+	}): ObjectValidator<T> => new ObjectValidator(shape),
 };
