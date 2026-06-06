@@ -12,3 +12,4 @@ coverage/
 *.tgz
 .claude/
 CLAUDE.md
+drafts/
