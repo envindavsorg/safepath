@@ -22,7 +22,6 @@ const obj = makeObj();
 
 // Sink prevents dead-code elimination in the native baseline.
 let sink: number | undefined;
-export { sink };
 
 describe("get — 5-level deep read", () => {
   bench("pathsafe getValueByPath", () => {
@@ -38,7 +37,7 @@ describe("get — 5-level deep read", () => {
   });
 
   bench("native optional chaining (baseline)", () => {
-    sink = obj.user?.profile?.address?.geo?.lat;
+    sink = obj.user?.profile?.address?.geo?.lat ?? sink;
   });
 });
 
