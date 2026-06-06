@@ -1,6 +1,9 @@
 {
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
+    "@types/lodash": "^4.17.24",
+    "dot-prop": "^10.1.0",
+    "lodash": "^4.18.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "ultracite": "7.8.1",
@@ -14,6 +17,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "bench": "vitest bench --run",
     "prepublishOnly": "pnpm build && pnpm test",
     "lint": "ultracite check",
     "lint:fix": "ultracite fix",

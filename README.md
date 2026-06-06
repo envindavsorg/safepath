@@ -113,6 +113,26 @@ bindNumericField('user.age');  // ✔
 bindNumericField('user.name'); // ✘ compile error — leads to a string
 ```
 
+## Wildcard paths
+
+`getMany` resolves `*` against every array element or record value — fully typed, autocompleted, and flattened across nested wildcards:
+
+```typescript
+const sp = safePath({
+	users: [
+		{ name: 'Alice', tags: ['admin', 'dev'] },
+		{ name: 'Bob', tags: ['dev'] },
+	],
+	settings: { colors: { primary: 'blue', accent: 'coral' } },
+});
+
+sp.getMany('users.*.name');       // string[] → ['Alice', 'Bob']
+sp.getMany('users.*.tags.*');     // string[] → ['admin', 'dev', 'dev']
+sp.getMany('settings.colors.*');  // string[] → ['blue', 'coral']
+```
+
+Wildcards only iterate own enumerable values — the prototype chain stays unreachable.
+
 ## Immutable mode
 
 All mutating operations accept `{ immutable: true }` and return a new object using **copy-on-write**: only the nodes along the path are cloned, everything else keeps its reference — ideal for React state and memoization.
@@ -139,6 +159,18 @@ sp.merge(JSON.parse(maliciousJson)); // __proto__ keys are skipped
 ```
 
 Reads use own-property semantics (`Object.hasOwn`), so inherited properties like `toString` are never reachable through a path.
+
+## Benchmarks
+
+5-level deep path, vitest bench on Node 22 (Apple Silicon) — run `pnpm bench` yourself:
+
+| Operation | pathsafe | lodash | dot-prop |
+| --- | --- | --- | --- |
+| `get` | **11.9M ops/s** | 8.3M ops/s | 2.8M ops/s |
+| `set` | **11.2M ops/s** | 6.0M ops/s | 2.7M ops/s |
+| immutable `set` | **5.3M ops/s** | — | — |
+
+Native optional chaining remains ~4× faster than any path library — use it when your paths are static. pathsafe is for the dynamic-path cases, with a bounded LRU cache for parsed paths. Immutable copy-on-write is **6.4× faster** than the naive `structuredClone` + assign approach.
 
 ## Standalone functions
 
@@ -175,6 +207,7 @@ getAllPaths(obj);             // every path present at runtime
 | `update(path, fn, options?)`                    | `T`                                      |
 | `merge(partial, options?)`                      | `T`                                      |
 | `pick(paths)`                                   | `{ [K in P]: PathValue<T, K> \| undefined }` |
+| `getMany(wildcardPath)`                         | `WildcardPathValue<T, P>[]`              |
 | `getAllPaths()`                                 | `PathKeys<T>[]`                          |
 | `isValidPath(path)`                             | `path is PathKeys<T>`                    |
 | `validate(path, schema)`                        | `StandardSchemaV1.Result<Output>`        |
@@ -191,6 +224,7 @@ getAllPaths(obj);             // every path present at runtime
 - `PathKeys<T, Depth = 10>` — union of every dot-path in `T` (bounded recursion; raise `Depth` for very deep types)
 - `PathValue<T, P>` — the type at path `P`
 - `PathsTo<T, V>` — every path in `T` whose value is assignable to `V`
+- `WildcardPathKeys<T>` / `WildcardPathValue<T, P>` — typed `*` paths for `getMany`
 - `PathSchemas<T>` / `PathsValidationResult` — input and output of `validateAll`
 - `StandardSchemaV1` — the vendored Standard Schema interface
 - `PathValidationError` — thrown by `validateAndSet` in strict mode (`.path`, `.issues`)

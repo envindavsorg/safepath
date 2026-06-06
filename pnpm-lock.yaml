@@ -11,6 +11,15 @@ importers:
       '@biomejs/biome':
         specifier: 2.4.15
         version: 2.4.15
+      '@types/lodash':
+        specifier: ^4.17.24
+        version: 4.17.24
+      dot-prop:
+        specifier: ^10.1.0
+        version: 10.1.0
+      lodash:
+        specifier: ^4.18.1
+        version: 4.18.1
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(postcss@8.5.15)(typescript@5.9.3)(yaml@2.9.0)
@@ -538,6 +547,9 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
+  '@types/lodash@4.17.24':
+    resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
+
   '@types/node@24.2.0':
     resolution: {integrity: sha512-3xyG3pMCq3oYCNg7/ZP+E1ooTaGB4cG8JWRsqqOYQdbWNY4zbaV0Ennrd7stjiJEFZCaybcIgpTjJWHRfBSIDw==}
 
@@ -649,6 +661,10 @@ packages:
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
+
+  dot-prop@10.1.0:
+    resolution: {integrity: sha512-MVUtAugQMOff5RnBy2d9N31iG0lNwg1qAoAOn7pOK5wf94WIaE3My2p3uwTQuvS2AcqchkcR3bHByjaM0mmi7Q==}
+    engines: {node: '>=20'}
 
   es-module-lexer@2.1.0:
     resolution: {integrity: sha512-n27zTYMjYu1aj4MjCWzSP7G9r75utsaoc8m61weK+W8JMBGGQybd43GstCXZ3WNmSFtGT9wi59qQTW6mhTR5LQ==}
@@ -789,6 +805,9 @@ packages:
   load-tsconfig@0.2.5:
     resolution: {integrity: sha512-IXO6OCs9yg8tMKzfPZ1YmheJbZCiEsnBdcB03l0OcfK9prKnJb96siuHCr5Fl37/yo9DnKU+TLpxzTUspw9shg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
+  lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   lru-cache@11.5.1:
     resolution: {integrity: sha512-RPimw/7aMdv2oqRrxKwvZXcPfwBrn/JZ2xYcY9Hus/6LaS3VOAKVWKWgNLCFSiOm1ESXinjsDlidVU7JlnCN2A==}
@@ -934,6 +953,10 @@ packages:
     engines: {node: '>=16 || 14 >=14.17'}
     hasBin: true
 
+  tagged-tag@1.0.0:
+    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
+    engines: {node: '>=20'}
+
   thenify-all@1.6.0:
     resolution: {integrity: sha512-RNxQH/qI8/t3thXJDwcstUO4zeqo64+Uy/+sNVRBx4Xn2OX+OZ9oP+iJnNFqplFra2ZUVeKCSa2oVWi3T4uVmA==}
     engines: {node: '>=0.8'}
@@ -987,6 +1010,10 @@ packages:
         optional: true
       typescript:
         optional: true
+
+  type-fest@5.7.0:
+    resolution: {integrity: sha512-1URUxUqfHFM1c+zfSPsa3gnkO7Aq21qyH75SIduNYz4SzY964rn1X2vCMQaHSHhktiw+0kPa2iyb6PUpXqB6Vg==}
+    engines: {node: '>=20'}
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -1431,6 +1458,8 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
+  '@types/lodash@4.17.24': {}
+
   '@types/node@24.2.0':
     dependencies:
       undici-types: 7.10.0
@@ -1527,6 +1556,10 @@ snapshots:
   deepmerge@4.3.1: {}
 
   detect-libc@2.1.2: {}
+
+  dot-prop@10.1.0:
+    dependencies:
+      type-fest: 5.7.0
 
   es-module-lexer@2.1.0: {}
 
@@ -1654,6 +1687,8 @@ snapshots:
   lines-and-columns@1.2.4: {}
 
   load-tsconfig@0.2.5: {}
+
+  lodash@4.18.1: {}
 
   lru-cache@11.5.1: {}
 
@@ -1814,6 +1849,8 @@ snapshots:
       tinyglobby: 0.2.17
       ts-interface-checker: 0.1.13
 
+  tagged-tag@1.0.0: {}
+
   thenify-all@1.6.0:
     dependencies:
       thenify: 3.3.1
@@ -1869,6 +1906,10 @@ snapshots:
       - supports-color
       - tsx
       - yaml
+
+  type-fest@5.7.0:
+    dependencies:
+      tagged-tag: 1.0.0
 
   typescript@5.9.3: {}
 
