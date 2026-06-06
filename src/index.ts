@@ -6,10 +6,13 @@ import type {
   PathValue,
   SafePathOptions,
   ValidatedSafePathOptions,
+  WildcardPathKeys,
+  WildcardPathValue,
 } from "./types";
 import {
   deletePath,
   getAllPaths,
+  getManyByPath,
   getValueByPath,
   hasPath,
   isUnsafeKey,
@@ -33,6 +36,12 @@ export interface SafePath<T extends object> {
   get<P extends PathKeys<T>>(path: P): PathValue<T, P> | undefined;
   get<P extends PathKeys<T>, D>(path: P, defaultValue: D): PathValue<T, P> | D;
   getAllPaths(): PathKeys<T>[];
+  /**
+   * Resolves a wildcard path (`'users.*.name'`) and returns every matched
+   * value, flattened across `*` expansions. Without `*`, returns an array
+   * of 0 or 1 element.
+   */
+  getMany<P extends WildcardPathKeys<T>>(path: P): WildcardPathValue<T, P>[];
   has<P extends PathKeys<T>>(path: P): boolean;
   isValidPath(path: string): path is PathKeys<T>;
   merge(partial: DeepPartial<T>, options?: SafePathOptions): T;
@@ -160,6 +169,10 @@ export const safePath = <T extends object>(
 
   getAllPaths(): PathKeys<T>[] {
     return getAllPaths(obj);
+  },
+
+  getMany<P extends WildcardPathKeys<T>>(path: P): WildcardPathValue<T, P>[] {
+    return getManyByPath(obj, path);
   },
 
   isValidPath(path: string): path is PathKeys<T> {
@@ -307,12 +320,15 @@ export type {
   PathValue,
   SafePathOptions,
   ValidatedSafePathOptions,
+  WildcardPathKeys,
+  WildcardPathValue,
 } from "./types";
 
 export {
   clearPathCache,
   deletePath,
   getAllPaths,
+  getManyByPath,
   getValueByPath,
   hasPath,
   isValidPath,

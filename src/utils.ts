@@ -1,4 +1,10 @@
-import type { PathKeys, PathValue, SafePathOptions } from "./types";
+import type {
+  PathKeys,
+  PathValue,
+  SafePathOptions,
+  WildcardPathKeys,
+  WildcardPathValue,
+} from "./types";
 
 const pathCache = new Map<string, readonly string[]>();
 const MAX_CACHE_SIZE = 1000;
@@ -118,6 +124,55 @@ export const setValueByPath = <T extends object, P extends PathKeys<T>>(
 
   current[lastKey] = value;
   return target;
+};
+
+const collectMatches = (
+  node: unknown,
+  keys: readonly string[],
+  index: number,
+  out: unknown[]
+): void => {
+  if (index === keys.length) {
+    out.push(node);
+    return;
+  }
+  if (node === null || typeof node !== "object") {
+    return;
+  }
+
+  const key = keys[index];
+  if (key === undefined || key === "") {
+    return;
+  }
+
+  if (key === "*") {
+    // Own enumerable values only — same safety contract as get.
+    const values = Array.isArray(node) ? node : Object.values(node);
+    for (const value of values) {
+      collectMatches(value, keys, index + 1, out);
+    }
+    return;
+  }
+
+  if (FORBIDDEN_KEYS.has(key) || !Object.hasOwn(node, key)) {
+    return;
+  }
+  collectMatches((node as Record<string, unknown>)[key], keys, index + 1, out);
+};
+
+/**
+ * Resolves a wildcard path (`'users.*.name'`) and returns every matched
+ * value, flattened across `*` expansions. Paths without `*` behave like
+ * `getValueByPath` but always return an array (0 or 1 element).
+ */
+export const getManyByPath = <T extends object, P extends WildcardPathKeys<T>>(
+  obj: T,
+  path: P
+): WildcardPathValue<T, P>[] => {
+  const keys = parsePath(path as string);
+  const out: unknown[] = [];
+  collectMatches(obj, keys, 0, out);
+  return out as WildcardPathValue<T, P>[];
 };
 
 export const hasPath = <T extends object, P extends PathKeys<T>>(

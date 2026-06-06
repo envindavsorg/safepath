@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0
+
+### Added
+
+- **Wildcard paths**: `getMany('users.*.name')` collects every matched value across arrays and records, with full type inference (`WildcardPathValue<T, P>`) and autocompletion (`WildcardPathKeys<T>`). Nested wildcards are flattened (`'matrix.*.*'`). Forbidden keys stay unreachable, wildcards only iterate own enumerable values.
+- Standalone `getManyByPath` export.
+- Release workflow with npm trusted publishing (OIDC) and provenance.
+
 ## 2.0.0
 
 Complete pivot: the package is now **pathsafe** (formerly `@envindavsorg/ts-safe-path`).

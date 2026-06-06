@@ -82,6 +82,57 @@ export type PathValue<T, P extends string> = T extends object
         : never
   : never;
 
+/** The element type of an array or the value union of a record/object. */
+type ElementOf<C> = C extends readonly (infer E)[]
+  ? E
+  : C extends Record<string, infer E>
+    ? E
+    : never;
+
+/**
+ * Like `PathKeys`, but every array index and object level can also be the
+ * `*` wildcard, e.g. `'users.*.name'` or `'matrix.*.*'`. Used by `getMany`.
+ */
+export type WildcardPathKeys<T, Depth extends number = 10> = [Depth] extends [
+  never,
+]
+  ? never
+  : T extends Leaf
+    ? never
+    : T extends readonly unknown[]
+      ?
+          | `${number}`
+          | "*"
+          | `${number | "*"}.${WildcardPathKeys<NonNullable<T[number]>, Prev[Depth]>}`
+      : T extends object
+        ? {
+            [K in keyof T & string]:
+              | K
+              | "*"
+              | `${K | "*"}.${WildcardPathKeys<NonNullable<T[K]>, Prev[Depth]>}`;
+          }[keyof T & string]
+        : never;
+
+/**
+ * The type of a single value matched by a wildcard path. `getMany` returns
+ * `WildcardPathValue<T, P>[]` — one entry per match, flattened across
+ * every `*` expansion.
+ */
+export type WildcardPathValue<
+  T,
+  P extends string,
+> = P extends `${infer Head}.*${infer Rest}`
+  ? Rest extends `.${infer Tail}`
+    ? WildcardPathValue<ElementOf<NonNullable<PathValue<T, Head>>>, Tail>
+    : Rest extends ""
+      ? ElementOf<NonNullable<PathValue<T, Head>>>
+      : never
+  : P extends "*"
+    ? ElementOf<NonNullable<T>>
+    : P extends `*.${infer Tail}`
+      ? WildcardPathValue<ElementOf<NonNullable<T>>, Tail>
+      : PathValue<T, P>;
+
 /**
  * Every path in `T` whose value is assignable to `V`. Handy for APIs that
  * only accept certain value types, e.g. a translation function that takes

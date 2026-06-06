@@ -21,7 +21,7 @@
     "format:check": "ultracite check"
   },
   "type": "module",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Type-safe nested object access for TypeScript — typed dot-paths with validation by any Standard Schema library (Zod, Valibot, ArkType…)",
   "packageManager": "pnpm@10.28.2",
   "main": "./dist/index.cjs",
