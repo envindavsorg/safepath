@@ -1,15 +1,14 @@
 # pathsafe
 
 [![CI](https://github.com/envindavsorg/safepath/actions/workflows/ci.yml/badge.svg)](https://github.com/envindavsorg/safepath/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/pathsafe)](https://www.npmjs.com/package/pathsafe)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Type-safe nested object access for TypeScript** — fully typed dot-paths (`'user.address.city'`) with autocompletion, plus validation at any path with the validator you already use: [Zod](https://zod.dev), [Valibot](https://valibot.dev), [ArkType](https://arktype.io), or any [Standard Schema](https://standardschema.dev) library.
 
-> ⚠️ Not yet published to npm — install from the repo for now:
-
 ```
-pnpm add github:envindavsorg/safepath
+pnpm add pathsafe   # npm install pathsafe / yarn add pathsafe
 ```
 
 - 🎯 **Full path autocompletion** — every valid dot-path of your type, inferred

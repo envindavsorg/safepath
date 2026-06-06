@@ -6,7 +6,7 @@ Complete pivot: the package is now **pathsafe** (formerly `@envindavsorg/ts-safe
 
 ### Breaking changes
 
-- **Package renamed** to `pathsafe` (the old GitHub Packages `publishConfig` is gone; public npm publishing planned).
+- **Package renamed** to `pathsafe`, published on the public npm registry (the old GitHub Packages `publishConfig` is gone).
 - **The built-in `s` schema builder is removed.** `validate` / `validateAndSet` now accept any [Standard Schema](https://standardschema.dev) validator instead: Zod 3.24+, Valibot v1+, ArkType 2+, Effect Schema… Migrate `s.string().min(2)` to e.g. `z.string().min(2)`.
 - `validate` now returns the Standard Schema result shape (`{ value }` or `{ issues }`) instead of `{ success, data, errors }`.
 - `validateAndSet` throws `PathValidationError` (with `.path` and `.issues`) instead of a generic `Error`.
