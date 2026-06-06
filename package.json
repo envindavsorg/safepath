@@ -1,78 +1,78 @@
 {
-	"name": "pathsafe",
-	"version": "2.0.0",
-	"description": "Type-safe nested object access for TypeScript — typed dot-paths with validation by any Standard Schema library (Zod, Valibot, ArkType…)",
-	"packageManager": "pnpm@10.28.2",
-	"type": "module",
-	"main": "./dist/index.cjs",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.cts",
-	"exports": {
-		".": {
-			"import": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.cts",
-				"default": "./dist/index.cjs"
-			}
-		}
-	},
-	"sideEffects": false,
-	"scripts": {
-		"build": "tsup",
-		"typecheck": "tsc --noEmit",
-		"test": "vitest run",
-		"test:watch": "vitest",
-		"prepublishOnly": "pnpm build && pnpm test",
-		"lint": "oxlint src tests",
-		"lint:fix": "oxlint --fix src tests",
-		"format": "oxfmt --write src tests",
-		"format:check": "oxfmt src tests"
-	},
-	"keywords": [
-		"typescript",
-		"type-safe",
-		"object",
-		"nested",
-		"path",
-		"dot-notation",
-		"get",
-		"set",
-		"standard-schema",
-		"validation",
-		"zod",
-		"valibot",
-		"arktype",
-		"utility"
-	],
-	"author": "Cuzeac Florin",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/envindavsorg/safepath.git"
-	},
-	"bugs": {
-		"url": "https://github.com/envindavsorg/safepath/issues"
-	},
-	"homepage": "https://github.com/envindavsorg/safepath#readme",
-	"devDependencies": {
-		"oxfmt": "^0.41.0",
-		"oxlint": "^1.56.0",
-		"tsup": "^8.5.1",
-		"typescript": "^5.9.3",
-		"valibot": "^1.4.1",
-		"vitest": "^4.1.8",
-		"zod": "^4.4.3"
-	},
-	"files": [
-		"dist",
-		"README.md",
-		"CHANGELOG.md",
-		"LICENSE"
-	],
-	"engines": {
-		"node": ">=18.0.0"
-	}
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "ultracite": "7.8.1",
+    "valibot": "^1.4.1",
+    "vitest": "^4.1.8",
+    "zod": "^4.4.3"
+  },
+  "name": "pathsafe",
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm build && pnpm test",
+    "lint": "ultracite check",
+    "lint:fix": "ultracite fix",
+    "format": "ultracite fix",
+    "format:check": "ultracite check"
+  },
+  "type": "module",
+  "version": "2.0.0",
+  "description": "Type-safe nested object access for TypeScript — typed dot-paths with validation by any Standard Schema library (Zod, Valibot, ArkType…)",
+  "packageManager": "pnpm@10.28.2",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "sideEffects": false,
+  "keywords": [
+    "typescript",
+    "type-safe",
+    "object",
+    "nested",
+    "path",
+    "dot-notation",
+    "get",
+    "set",
+    "standard-schema",
+    "validation",
+    "zod",
+    "valibot",
+    "arktype",
+    "utility"
+  ],
+  "author": "Cuzeac Florin",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/envindavsorg/safepath.git"
+  },
+  "bugs": {
+    "url": "https://github.com/envindavsorg/safepath/issues"
+  },
+  "homepage": "https://github.com/envindavsorg/safepath#readme",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

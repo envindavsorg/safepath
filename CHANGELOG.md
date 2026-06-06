@@ -26,7 +26,7 @@ Complete pivot: the package is now **pathsafe** (formerly `@envindavsorg/ts-safe
 - Type-level support for **interfaces** (previously resolved to `never`), **optional properties**, **arrays and tuples** (`items.0.name`), **unions**, and a configurable recursion `Depth` guard against TS2589.
 - `set` creates intermediate **arrays** for numeric segments.
 - `merge` skips dangerous keys (`__proto__`…) from untrusted payloads.
-- CI (GitHub Actions), vitest, tsup.
+- CI (GitHub Actions), vitest, tsup, Biome + Ultracite for linting/formatting.
 
 ## 1.0.x
 

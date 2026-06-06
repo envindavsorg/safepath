@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite/biome/core"],
+  "overrides": [
+    {
+      // Vendored Standard Schema spec — kept byte-compatible with upstream.
+      "includes": ["src/standard-schema.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNamespace": "off",
+            "useConsistentTypeDefinitions": "off",
+            "useConsistentArrayType": "off"
+          }
+        }
+      }
+    },
+    {
+      // The package entry point is a barrel by design.
+      "includes": ["src/index.ts"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "off"
+          },
+          "style": {
+            "useConsistentArrayType": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["tests/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            // Exported `type cases = [...]` blocks are compile-time
+            // assertions checked by `tsc` — exports keep them "used".
+            "noExportsInTest": "off"
+          },
+          "performance": {
+            // `import * as v from "valibot"` is the idiomatic Valibot import.
+            "noNamespaceImport": "off",
+            "useTopLevelRegex": "off"
+          }
+        }
+      }
+    }
+  ]
+}

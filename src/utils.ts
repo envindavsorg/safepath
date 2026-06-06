@@ -1,4 +1,4 @@
-import type { PathKeys, PathValue, SafePathOptions } from './types';
+import type { PathKeys, PathValue, SafePathOptions } from "./types";
 
 const pathCache = new Map<string, readonly string[]>();
 const MAX_CACHE_SIZE = 1000;
@@ -7,225 +7,234 @@ const MAX_CACHE_SIZE = 1000;
  * Keys that would let a path reach `Object.prototype` (prototype pollution).
  * Write operations throw on them; read operations treat them as absent.
  */
-const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 const parsePath = (path: string): readonly string[] => {
-	const cached = pathCache.get(path);
-	if (cached) {
-		return cached;
-	}
+  const cached = pathCache.get(path);
+  if (cached) {
+    return cached;
+  }
 
-	const keys = path.split('.');
+  const keys = path.split(".");
 
-	if (pathCache.size >= MAX_CACHE_SIZE) {
-		const firstKey = pathCache.keys().next().value;
-		if (firstKey !== undefined) {
-			pathCache.delete(firstKey);
-		}
-	}
+  if (pathCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = pathCache.keys().next().value;
+    if (firstKey !== undefined) {
+      pathCache.delete(firstKey);
+    }
+  }
 
-	pathCache.set(path, keys);
-	return keys;
+  pathCache.set(path, keys);
+  return keys;
 };
 
 /** True for keys that must never be written through (prototype pollution). */
 export const isUnsafeKey = (key: string): boolean => FORBIDDEN_KEYS.has(key);
 
 const assertSafeKeys = (keys: readonly string[], path: string): void => {
-	for (const key of keys) {
-		if (FORBIDDEN_KEYS.has(key)) {
-			throw new TypeError(
-				`Unsafe path segment "${key}" in path "${path}": writing through it would reach the prototype chain`
-			);
-		}
-	}
+  for (const key of keys) {
+    if (FORBIDDEN_KEYS.has(key)) {
+      throw new TypeError(
+        `Unsafe path segment "${key}" in path "${path}": writing through it would reach the prototype chain`
+      );
+    }
+  }
 };
 
-const isIndexKey = (key: string): boolean => /^\d+$/.test(key);
+const INDEX_KEY_PATTERN = /^\d+$/;
+
+const isIndexKey = (key: string): boolean => INDEX_KEY_PATTERN.test(key);
 
 /** Shallow-clones a single node, preserving array-ness (copy-on-write step). */
 const cloneNode = (value: unknown): Record<string, unknown> | unknown[] =>
-	Array.isArray(value) ? [...value] : { ...(value as object) };
+  Array.isArray(value) ? [...value] : { ...(value as object) };
 
 export const getValueByPath = <
-	T extends object,
-	P extends PathKeys<T>,
-	D = undefined,
+  T extends object,
+  P extends PathKeys<T>,
+  D = undefined,
 >(
-	obj: T,
-	path: P,
-	defaultValue?: D
+  obj: T,
+  path: P,
+  defaultValue?: D
 ): PathValue<T, P> | D => {
-	const keys = parsePath(path as string);
-	let result: unknown = obj;
+  const keys = parsePath(path as string);
+  let result: unknown = obj;
 
-	for (const key of keys) {
-		if (
-			result == null ||
-			typeof result !== 'object' ||
-			FORBIDDEN_KEYS.has(key) ||
-			!Object.hasOwn(result, key)
-		) {
-			return defaultValue as D;
-		}
-		result = (result as Record<string, unknown>)[key];
-	}
+  for (const key of keys) {
+    if (
+      result == null ||
+      typeof result !== "object" ||
+      FORBIDDEN_KEYS.has(key) ||
+      !Object.hasOwn(result, key)
+    ) {
+      return defaultValue as D;
+    }
+    result = (result as Record<string, unknown>)[key];
+  }
 
-	return (result === undefined ? defaultValue : result) as
-		| PathValue<T, P>
-		| D;
+  return (result === undefined ? defaultValue : result) as PathValue<T, P> | D;
 };
 
 export const setValueByPath = <T extends object, P extends PathKeys<T>>(
-	obj: T,
-	path: P,
-	value: PathValue<T, P>,
-	options?: SafePathOptions
+  obj: T,
+  path: P,
+  value: PathValue<T, P>,
+  options?: SafePathOptions
 ): T => {
-	const keys = parsePath(path as string);
-	assertSafeKeys(keys, path as string);
-	const lastKey = keys[keys.length - 1];
-	if (!lastKey) {
-		return obj;
-	}
+  const keys = parsePath(path as string);
+  assertSafeKeys(keys, path as string);
+  const lastKey = keys.at(-1);
+  if (!lastKey) {
+    return obj;
+  }
 
-	const target = options?.immutable ? (cloneNode(obj) as T) : obj;
-	let current = target as Record<string, unknown>;
+  const target = options?.immutable ? (cloneNode(obj) as T) : obj;
+  let current = target as Record<string, unknown>;
 
-	for (let i = 0; i < keys.length - 1; i++) {
-		const key = keys[i];
-		if (!key) {
-			continue;
-		}
+  for (let i = 0; i < keys.length - 1; i++) {
+    const key = keys[i];
+    if (!key) {
+      continue;
+    }
 
-		const existing = current[key];
-		if (
-			!Object.hasOwn(current, key) ||
-			existing === null ||
-			typeof existing !== 'object'
-		) {
-			// Create the missing node: an array when the next segment is a
-			// numeric index, a plain object otherwise.
-			const nextKey = keys[i + 1];
-			current[key] =
-				nextKey !== undefined && isIndexKey(nextKey) ? [] : {};
-		} else if (options?.immutable) {
-			// Copy-on-write: only the nodes along the path are cloned, the
-			// rest of the structure is shared with the original.
-			current[key] = cloneNode(existing);
-		}
-		current = current[key] as Record<string, unknown>;
-	}
+    const existing = current[key];
+    if (
+      !Object.hasOwn(current, key) ||
+      existing === null ||
+      typeof existing !== "object"
+    ) {
+      // Create the missing node: an array when the next segment is a
+      // numeric index, a plain object otherwise.
+      const nextKey = keys[i + 1];
+      current[key] = nextKey !== undefined && isIndexKey(nextKey) ? [] : {};
+    } else if (options?.immutable) {
+      // Copy-on-write: only the nodes along the path are cloned, the
+      // rest of the structure is shared with the original.
+      current[key] = cloneNode(existing);
+    }
+    current = current[key] as Record<string, unknown>;
+  }
 
-	current[lastKey] = value;
-	return target;
+  current[lastKey] = value;
+  return target;
 };
 
 export const hasPath = <T extends object, P extends PathKeys<T>>(
-	obj: T,
-	path: P
+  obj: T,
+  path: P
 ): boolean => {
-	const keys = parsePath(path as string);
-	let current: unknown = obj;
+  const keys = parsePath(path as string);
+  let current: unknown = obj;
 
-	for (const key of keys) {
-		if (
-			!key ||
-			current == null ||
-			typeof current !== 'object' ||
-			!Object.hasOwn(current, key)
-		) {
-			return false;
-		}
-		current = (current as Record<string, unknown>)[key];
-	}
+  for (const key of keys) {
+    if (
+      !key ||
+      current == null ||
+      typeof current !== "object" ||
+      !Object.hasOwn(current, key)
+    ) {
+      return false;
+    }
+    current = (current as Record<string, unknown>)[key];
+  }
 
-	return true;
+  return true;
 };
 
 export const deletePath = <T extends object, P extends PathKeys<T>>(
-	obj: T,
-	path: P,
-	options?: SafePathOptions
+  obj: T,
+  path: P,
+  options?: SafePathOptions
 ): T => {
-	const keys = parsePath(path as string);
-	assertSafeKeys(keys, path as string);
-	const lastKey = keys[keys.length - 1];
-	if (!lastKey || !hasPath(obj, path)) {
-		return obj;
-	}
+  const keys = parsePath(path as string);
+  assertSafeKeys(keys, path as string);
+  const lastKey = keys.at(-1);
+  if (!(lastKey && hasPath(obj, path))) {
+    return obj;
+  }
 
-	const target = options?.immutable ? (cloneNode(obj) as T) : obj;
-	let current = target as Record<string, unknown>;
+  const target = options?.immutable ? (cloneNode(obj) as T) : obj;
+  let current = target as Record<string, unknown>;
 
-	for (let i = 0; i < keys.length - 1; i++) {
-		const key = keys[i];
-		if (
-			!key ||
-			!Object.hasOwn(current, key) ||
-			current[key] === null ||
-			typeof current[key] !== 'object'
-		) {
-			return target;
-		}
-		if (options?.immutable) {
-			current[key] = cloneNode(current[key]);
-		}
-		current = current[key] as Record<string, unknown>;
-	}
+  for (let i = 0; i < keys.length - 1; i++) {
+    const key = keys[i];
+    if (
+      !(key && Object.hasOwn(current, key)) ||
+      current[key] === null ||
+      typeof current[key] !== "object"
+    ) {
+      return target;
+    }
+    if (options?.immutable) {
+      current[key] = cloneNode(current[key]);
+    }
+    current = current[key] as Record<string, unknown>;
+  }
 
-	if (Array.isArray(current) && isIndexKey(lastKey)) {
-		current.splice(Number(lastKey), 1);
-	} else {
-		delete current[lastKey];
-	}
+  if (Array.isArray(current) && isIndexKey(lastKey)) {
+    current.splice(Number(lastKey), 1);
+  } else {
+    delete current[lastKey];
+  }
 
-	return target;
+  return target;
 };
 
 export const isValidPath = <T extends object>(
-	obj: T,
-	path: string
+  obj: T,
+  path: string
 ): path is PathKeys<T> =>
-	typeof path === 'string' &&
-	path.length > 0 &&
-	hasPath(obj, path as PathKeys<T>);
+  typeof path === "string" &&
+  path.length > 0 &&
+  hasPath(obj, path as PathKeys<T>);
+
+interface PathStackItem {
+  node: unknown;
+  prefix: string;
+}
+
+const collectOwnPaths = (
+  item: PathStackItem,
+  paths: string[],
+  stack: PathStackItem[]
+): void => {
+  const { node, prefix } = item;
+  if (!node || typeof node !== "object") {
+    return;
+  }
+
+  const record = node as Record<string, unknown>;
+  for (const key in record) {
+    if (!Object.hasOwn(record, key)) {
+      continue;
+    }
+    const newPath = prefix ? `${prefix}.${key}` : key;
+    paths.push(newPath);
+
+    const val = record[key];
+    if (val != null && typeof val === "object") {
+      stack.push({ node: val, prefix: newPath });
+    }
+  }
+};
 
 export const getAllPaths = <T extends object>(
-	obj: T,
-	prefix = ''
+  obj: T,
+  prefix = ""
 ): PathKeys<T>[] => {
-	const paths: string[] = [];
-	const stack: Array<{ obj: unknown; prefix: string }> = [{ obj, prefix }];
+  const paths: string[] = [];
+  const stack: PathStackItem[] = [{ node: obj, prefix }];
 
-	while (stack.length > 0) {
-		const stackItem = stack.pop();
-		if (!stackItem) {
-			break;
-		}
-		const { obj: current, prefix: currentPrefix } = stackItem;
+  let item = stack.pop();
+  while (item) {
+    collectOwnPaths(item, paths, stack);
+    item = stack.pop();
+  }
 
-		if (current && typeof current === 'object') {
-			const currentObj = current as Record<string, unknown>;
-			for (const key in currentObj) {
-				if (Object.hasOwn(currentObj, key)) {
-					const newPath = currentPrefix
-						? `${currentPrefix}.${key}`
-						: key;
-					paths.push(newPath);
-
-					const val = currentObj[key];
-					if (val != null && typeof val === 'object') {
-						stack.push({ obj: val, prefix: newPath });
-					}
-				}
-			}
-		}
-	}
-
-	return paths as PathKeys<T>[];
+  return paths as PathKeys<T>[];
 };
 
 export const clearPathCache = (): void => {
-	pathCache.clear();
+  pathCache.clear();
 };

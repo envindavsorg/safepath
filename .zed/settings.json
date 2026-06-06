@@ -43,11 +43,13 @@
         "source.fixAll.oxc": true,
         "source.organizeImports.oxc": true,
         "source.organizeImports": true,
-        "source.removeUnusedImports": true
+        "source.removeUnusedImports": true,
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
       },
       "formatter": {
         "language_server": {
-          "name": "oxfmt"
+          "name": "biome"
         }
       }
     },
@@ -56,11 +58,13 @@
         "source.fixAll.oxc": true,
         "source.organizeImports.oxc": true,
         "source.organizeImports": true,
-        "source.removeUnusedImports": true
+        "source.removeUnusedImports": true,
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
       },
       "formatter": {
         "language_server": {
-          "name": "oxfmt"
+          "name": "biome"
         }
       }
     },
@@ -69,11 +73,13 @@
         "source.fixAll.oxc": true,
         "source.organizeImports.oxc": true,
         "source.organizeImports": true,
-        "source.removeUnusedImports": true
+        "source.removeUnusedImports": true,
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
       },
       "formatter": {
         "language_server": {
-          "name": "oxfmt"
+          "name": "biome"
         }
       }
     }

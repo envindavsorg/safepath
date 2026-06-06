@@ -28,11 +28,8 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Lint
+      - name: Lint and format check
         run: pnpm lint
-
-      - name: Format check
-        run: pnpm format:check
 
       - name: Test
         run: pnpm test
