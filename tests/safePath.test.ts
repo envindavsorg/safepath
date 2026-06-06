@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { clearPathCache, safePath } from '../src';
 
 describe('safePath', () => {
@@ -29,10 +30,18 @@ describe('safePath', () => {
 			expect(sp.get('settings.theme')).toBe('dark');
 		});
 
-		it('should return undefined for non-existent paths', () => {
+		it('should get array elements by numeric path', () => {
 			const sp = safePath(getTestObj());
 
-			expect(sp.get('user.profile.email')).toBe('john@example.com');
+			expect(sp.get('user.hobbies.0')).toBe('coding');
+			expect(sp.get('user.hobbies.1')).toBe('reading');
+		});
+
+		it('should return undefined for inherited properties', () => {
+			const sp = safePath({ user: { name: 'John' } });
+
+			// get must not walk the prototype chain (consistent with has)
+			expect(sp.get('user.toString' as never)).toBeUndefined();
 		});
 	});
 
@@ -55,6 +64,27 @@ describe('safePath', () => {
 			expect(result).toBe(obj); // Should return the same object reference
 			expect(obj.test.deep.nested.value).toBe('success');
 		});
+
+		it('should create arrays for numeric segments', () => {
+			type TestObj = { list?: { name: string }[] };
+			const obj: TestObj = {};
+			const sp = safePath(obj);
+
+			sp.set('list.0.name', 'first');
+
+			expect(Array.isArray(obj.list)).toBe(true);
+			expect(obj.list?.[0]?.name).toBe('first');
+		});
+
+		it('should set existing array elements in place', () => {
+			const obj = getTestObj();
+			const sp = safePath(obj);
+
+			sp.set('user.hobbies.0', 'writing');
+
+			expect(Array.isArray(obj.user.hobbies)).toBe(true);
+			expect(obj.user.hobbies[0]).toBe('writing');
+		});
 	});
 
 	describe('has', () => {
@@ -63,6 +93,12 @@ describe('safePath', () => {
 
 			expect(sp.has('user.profile.email')).toBe(true);
 			expect(sp.has('user.profile.address.city')).toBe(true);
+		});
+
+		it('should not report inherited properties', () => {
+			const sp = safePath({ user: { name: 'John' } });
+
+			expect(sp.has('user.toString' as never)).toBe(false);
 		});
 	});
 
@@ -94,6 +130,20 @@ describe('safePath', () => {
 			expect(obj.user.profile.address.city).toBe('Marseille');
 			expect(obj.user.profile.email).toBe('john@example.com'); // Unchanged
 		});
+
+		it('should preserve referential identity of merged sub-objects', () => {
+			const obj = getTestObj();
+			const profileRef = obj.user.profile;
+			const settingsRef = obj.settings;
+			const sp = safePath(obj);
+
+			sp.merge({ user: { profile: { email: 'new@example.com' } } });
+
+			// in-place merge must not replace existing sub-object references
+			expect(obj.user.profile).toBe(profileRef);
+			expect(obj.settings).toBe(settingsRef);
+			expect(obj.user.profile.email).toBe('new@example.com');
+		});
 	});
 
 	describe('immutable operations', () => {
@@ -105,6 +155,30 @@ describe('safePath', () => {
 
 			expect(original.user.name).toBe('John'); // Original unchanged
 			expect(result.user.name).toBe('Jane'); // New object has changes
+		});
+
+		it('should share untouched branches (structural sharing)', () => {
+			const original = getTestObj();
+			const sp = safePath(original);
+
+			const result = sp.set('user.name', 'Jane', { immutable: true });
+
+			// settings was not on the path: same reference
+			expect(result.settings).toBe(original.settings);
+			// user was on the path: new reference
+			expect(result.user).not.toBe(original.user);
+		});
+
+		it('should support objects containing functions in immutable mode', () => {
+			const original = { config: { level: 1 }, onChange: () => 'called' };
+			const sp = safePath(original);
+
+			// structuredClone would throw here — copy-on-write must not
+			const result = sp.set('config.level', 2, { immutable: true });
+
+			expect(original.config.level).toBe(1);
+			expect(result.config.level).toBe(2);
+			expect(result.onChange()).toBe('called');
 		});
 
 		it('should handle immutable delete operations', () => {
@@ -125,6 +199,21 @@ describe('safePath', () => {
 			expect(result.user).toBeDefined();
 			expect('tempProp' in result.user).toBe(false); // Property should not exist
 			expect(result.other.data).toBe('keep'); // Other data preserved
+			expect(result.other).toBe(original.other); // Untouched branch shared
+		});
+
+		it('should handle immutable merge with structural sharing', () => {
+			const original = getTestObj();
+			const sp = safePath(original);
+
+			const result = sp.merge(
+				{ settings: { theme: 'light' } },
+				{ immutable: true }
+			);
+
+			expect(original.settings.theme).toBe('dark');
+			expect(result.settings.theme).toBe('light');
+			expect(result.user).toBe(original.user); // Untouched branch shared
 		});
 	});
 
@@ -196,6 +285,16 @@ describe('safePath', () => {
 
 			sp.set('deeply.nested.path', 'value');
 			expect(obj.deeply.nested.path).toBe('value');
+		});
+
+		it('should delete array elements with splice semantics (no holes)', () => {
+			const obj = getTestObj();
+			const sp = safePath(obj);
+
+			sp.delete('user.hobbies.0');
+
+			expect(obj.user.hobbies).toEqual(['reading']);
+			expect(obj.user.hobbies.length).toBe(1);
 		});
 	});
 });

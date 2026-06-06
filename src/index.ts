@@ -1,7 +1,9 @@
-import type { SchemaValidator, ValidationResult } from './schema';
+import type { StandardSchemaV1 } from './standard-schema';
+import { PathValidationError, validateSync } from './standard-schema';
 import type {
 	DeepPartial,
 	PathKeys,
+	PathsTo,
 	PathValue,
 	SafePathOptions,
 	ValidatedSafePathOptions,
@@ -12,12 +14,28 @@ import {
 	getAllPaths,
 	getValueByPath,
 	hasPath,
+	isUnsafeKey,
 	isValidPath,
 	setValueByPath,
 } from './utils';
 
-export interface SafePath<T extends Record<string, unknown>> {
+/** One Standard Schema per path, for `validateAll`. */
+export type PathSchemas<T extends object> = {
+	[P in PathKeys<T>]?: StandardSchemaV1;
+};
+
+/** Aggregated result of `validateAll`: issues keyed by failing path. */
+export interface PathsValidationResult {
+	success: boolean;
+	issues: Partial<Record<string, ReadonlyArray<StandardSchemaV1.Issue>>>;
+}
+
+export interface SafePath<T extends object> {
 	get<P extends PathKeys<T>>(path: P): PathValue<T, P> | undefined;
+	get<P extends PathKeys<T>, D>(
+		path: P,
+		defaultValue: D
+	): PathValue<T, P> | D;
 	set<P extends PathKeys<T>>(
 		path: P,
 		value: PathValue<T, P>,
@@ -31,26 +49,65 @@ export interface SafePath<T extends Record<string, unknown>> {
 		options?: SafePathOptions
 	): T;
 	merge(partial: DeepPartial<T>, options?: SafePathOptions): T;
+	/** Extracts several paths at once into a flat, fully typed object. */
+	pick<P extends PathKeys<T>>(
+		paths: readonly P[]
+	): { [K in P]: PathValue<T, K> | undefined };
 	getAllPaths(): PathKeys<T>[];
 	isValidPath(path: string): path is PathKeys<T>;
-	validate<P extends PathKeys<T>>(
+	/**
+	 * Validates several paths in one call, each against its own Standard
+	 * Schema. Returns an aggregated result with issues keyed by path —
+	 * ideal for validating a form or a config object field by field.
+	 */
+	validateAll(schemas: PathSchemas<T>): PathsValidationResult;
+	/**
+	 * Validates the value at `path` with any Standard Schema validator
+	 * (Zod 3.24+, Valibot v1+, ArkType 2+, Effect Schema, …).
+	 * Throws if the schema validates asynchronously — use `validateAsync`.
+	 */
+	validate<P extends PathKeys<T>, Schema extends StandardSchemaV1>(
 		path: P,
-		schema: SchemaValidator<PathValue<T, P>>
-	): ValidationResult<PathValue<T, P>>;
-	validateAndSet<P extends PathKeys<T>>(
+		schema: Schema
+	): StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>;
+	validateAsync<P extends PathKeys<T>, Schema extends StandardSchemaV1>(
+		path: P,
+		schema: Schema
+	): Promise<StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>>;
+	/**
+	 * Validates `value` with the schema, then sets the validated output at
+	 * `path`. Throws `PathValidationError` on failure unless
+	 * `{ strict: false }`, in which case the object is returned unchanged.
+	 */
+	validateAndSet<
+		P extends PathKeys<T>,
+		Schema extends StandardSchemaV1<unknown, PathValue<T, P>>,
+	>(
 		path: P,
 		value: unknown,
-		schema: SchemaValidator<PathValue<T, P>>,
+		schema: Schema,
 		options?: ValidatedSafePathOptions
 	): T;
+	validateAndSetAsync<
+		P extends PathKeys<T>,
+		Schema extends StandardSchemaV1<unknown, PathValue<T, P>>,
+	>(
+		path: P,
+		value: unknown,
+		schema: Schema,
+		options?: ValidatedSafePathOptions
+	): Promise<T>;
 }
 
-export const safePath = <T extends Record<string, unknown>>(
+export const safePath = <T extends object>(
 	obj: T,
 	defaultOptions?: SafePathOptions
 ): SafePath<T> => ({
-	get<P extends PathKeys<T>>(path: P): PathValue<T, P> | undefined {
-		return getValueByPath(obj, path);
+	get<P extends PathKeys<T>, D = undefined>(
+		path: P,
+		defaultValue?: D
+	): PathValue<T, P> | D {
+		return getValueByPath(obj, path, defaultValue as D);
 	},
 
 	set<P extends PathKeys<T>>(
@@ -59,11 +116,7 @@ export const safePath = <T extends Record<string, unknown>>(
 		options?: SafePathOptions
 	): T {
 		const opts = { ...defaultOptions, ...options };
-		if (opts?.immutable) {
-			return setValueByPath(obj, path, value, opts);
-		}
-		setValueByPath(obj, path, value, opts);
-		return obj;
+		return setValueByPath(obj, path, value, opts);
 	},
 
 	has<P extends PathKeys<T>>(path: P): boolean {
@@ -72,11 +125,7 @@ export const safePath = <T extends Record<string, unknown>>(
 
 	delete<P extends PathKeys<T>>(path: P, options?: SafePathOptions): T {
 		const opts = { ...defaultOptions, ...options };
-		if (opts?.immutable) {
-			return deletePath(obj, path, opts);
-		}
-		deletePath(obj, path, opts);
-		return obj;
+		return deletePath(obj, path, opts);
 	},
 
 	update<P extends PathKeys<T>>(
@@ -91,11 +140,27 @@ export const safePath = <T extends Record<string, unknown>>(
 
 	merge(partial: DeepPartial<T>, options?: SafePathOptions): T {
 		const opts = { ...defaultOptions, ...options };
-		const result = deepMerge(obj, partial, opts?.immutable);
-		if (!opts?.immutable) {
-			Object.assign(obj, result);
+		if (opts?.immutable) {
+			return deepMergeCopy(
+				obj as Record<string, unknown>,
+				partial as Record<string, unknown>
+			) as T;
 		}
-		return result;
+		deepMergeInto(
+			obj as Record<string, unknown>,
+			partial as Record<string, unknown>
+		);
+		return obj;
+	},
+
+	pick<P extends PathKeys<T>>(
+		paths: readonly P[]
+	): { [K in P]: PathValue<T, K> | undefined } {
+		const result: Record<string, unknown> = {};
+		for (const path of paths) {
+			result[path] = getValueByPath(obj, path);
+		}
+		return result as { [K in P]: PathValue<T, K> | undefined };
 	},
 
 	getAllPaths(): PathKeys<T>[] {
@@ -106,80 +171,147 @@ export const safePath = <T extends Record<string, unknown>>(
 		return isValidPath(obj, path);
 	},
 
-	validate<P extends PathKeys<T>>(
-		path: P,
-		schema: SchemaValidator<PathValue<T, P>>
-	): ValidationResult<PathValue<T, P>> {
-		const value = getValueByPath(obj, path);
-		return schema.validate(value);
+	validateAll(schemas: PathSchemas<T>): PathsValidationResult {
+		const issues: Record<
+			string,
+			ReadonlyArray<StandardSchemaV1.Issue>
+		> = {};
+		let success = true;
+
+		for (const [path, schema] of Object.entries(schemas) as Array<
+			[PathKeys<T>, StandardSchemaV1 | undefined]
+		>) {
+			if (!schema) {
+				continue;
+			}
+			const result = validateSync(schema, getValueByPath(obj, path));
+			if (result.issues) {
+				success = false;
+				issues[path] = result.issues;
+			}
+		}
+
+		return { success, issues };
 	},
 
-	validateAndSet<P extends PathKeys<T>>(
+	validate<P extends PathKeys<T>, Schema extends StandardSchemaV1>(
+		path: P,
+		schema: Schema
+	): StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>> {
+		return validateSync(schema, getValueByPath(obj, path));
+	},
+
+	async validateAsync<P extends PathKeys<T>, Schema extends StandardSchemaV1>(
+		path: P,
+		schema: Schema
+	): Promise<StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>> {
+		return (await schema['~standard'].validate(
+			getValueByPath(obj, path)
+		)) as StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>;
+	},
+
+	validateAndSet<
+		P extends PathKeys<T>,
+		Schema extends StandardSchemaV1<unknown, PathValue<T, P>>,
+	>(
 		path: P,
 		value: unknown,
-		schema: SchemaValidator<PathValue<T, P>>,
+		schema: Schema,
 		options?: ValidatedSafePathOptions
 	): T {
-		const validationResult = schema.validate(value);
+		const result = validateSync(schema, value);
 
-		if (!validationResult.success) {
+		if (result.issues) {
 			if (options?.strict !== false) {
-				throw new Error(
-					`Validation failed for path "${path}": ${validationResult.errors
-						.map((e) => e.message)
-						.join(', ')}`
-				);
+				throw new PathValidationError(path, result.issues);
 			}
 			return obj;
 		}
 
-		return this.set(path, validationResult.data, options);
+		return this.set(path, result.value as PathValue<T, P>, options);
+	},
+
+	async validateAndSetAsync<
+		P extends PathKeys<T>,
+		Schema extends StandardSchemaV1<unknown, PathValue<T, P>>,
+	>(
+		path: P,
+		value: unknown,
+		schema: Schema,
+		options?: ValidatedSafePathOptions
+	): Promise<T> {
+		const result = await schema['~standard'].validate(value);
+
+		if (result.issues) {
+			if (options?.strict !== false) {
+				throw new PathValidationError(path, result.issues);
+			}
+			return obj;
+		}
+
+		return this.set(path, result.value as PathValue<T, P>, options);
 	},
 });
 
-const deepMerge = <T extends Record<string, unknown>>(
-	target: T,
-	source: DeepPartial<T>,
-	immutable = false
-): T => {
-	const result = immutable ? structuredClone(target) : { ...target };
+const isMergeableObject = (value: unknown): value is Record<string, unknown> =>
+	value !== null && typeof value === 'object' && !Array.isArray(value);
+
+/**
+ * Merges `source` into `target` in place, preserving the referential
+ * identity of every sub-object that already exists in `target`.
+ */
+const deepMergeInto = (
+	target: Record<string, unknown>,
+	source: Record<string, unknown>
+): void => {
+	for (const key in source) {
+		if (!Object.hasOwn(source, key) || isUnsafeKey(key)) {
+			continue;
+		}
+		const sourceValue = source[key];
+		const targetValue = target[key];
+
+		if (isMergeableObject(sourceValue) && isMergeableObject(targetValue)) {
+			deepMergeInto(targetValue, sourceValue);
+		} else if (sourceValue !== undefined) {
+			target[key] = sourceValue;
+		}
+	}
+};
+
+/**
+ * Returns a new object with `source` merged over `target`. Untouched
+ * branches are shared structurally with `target` (no full deep clone).
+ */
+const deepMergeCopy = (
+	target: Record<string, unknown>,
+	source: Record<string, unknown>
+): Record<string, unknown> => {
+	const result: Record<string, unknown> = { ...target };
 
 	for (const key in source) {
-		if (Object.hasOwn(source, key)) {
-			const sourceValue = source[key];
-			const targetValue = result[key];
+		if (!Object.hasOwn(source, key) || isUnsafeKey(key)) {
+			continue;
+		}
+		const sourceValue = source[key];
+		const targetValue = result[key];
 
-			if (
-				sourceValue &&
-				typeof sourceValue === 'object' &&
-				!Array.isArray(sourceValue) &&
-				targetValue &&
-				typeof targetValue === 'object' &&
-				!Array.isArray(targetValue)
-			) {
-				(result as Record<string, unknown>)[key] = deepMerge(
-					targetValue as Record<string, unknown>,
-					sourceValue as DeepPartial<T>,
-					immutable
-				);
-			} else if (sourceValue !== undefined) {
-				(result as Record<string, unknown>)[key] = sourceValue;
-			}
+		if (isMergeableObject(sourceValue) && isMergeableObject(targetValue)) {
+			result[key] = deepMergeCopy(targetValue, sourceValue);
+		} else if (sourceValue !== undefined) {
+			result[key] = sourceValue;
 		}
 	}
 
 	return result;
 };
 
-export { s } from './schema';
-export type {
-	SchemaValidator,
-	ValidationError,
-	ValidationResult,
-} from './schema';
+export { PathValidationError, validateSync } from './standard-schema';
+export type { StandardSchemaV1 } from './standard-schema';
 export type {
 	DeepPartial,
 	PathKeys,
+	PathsTo,
 	PathValue,
 	SafePathOptions,
 	ValidatedSafePathOptions,

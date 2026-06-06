@@ -1,18 +1,27 @@
-![ts-safe-path](https://private-user-images.githubusercontent.com/30373492/474619334-6e298a16-1186-4667-a960-4389730cea46.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3Njk2ODk1NTAsIm5iZiI6MTc2OTY4OTI1MCwicGF0aCI6Ii8zMDM3MzQ5Mi80NzQ2MTkzMzQtNmUyOThhMTYtMTE4Ni00NjY3LWE5NjAtNDM4OTczMGNlYTQ2LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjAxMjklMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwMTI5VDEyMjA1MFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiNjcyN2MzYjdjMTIyM2U5NzBmNDg2ZDNjNjVmZWQ2MzdiMzhiMTAxYzdhOGQwZjNlNTBhMTU5MjEwNzM5NjcmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.psLg6FVoBvEdCi1LG3i_DcysEhXRs5zHiPkvVwQlanQ)
+# pathsafe
 
----
-
-# ts-safe-path
-
+[![CI](https://github.com/envindavsorg/safepath/actions/workflows/ci.yml/badge.svg)](https://github.com/envindavsorg/safepath/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Type-safe nested object access and manipulation for TypeScript. Full autocompletion, zero runtime errors, zero dependencies.
+**Type-safe nested object access for TypeScript** — fully typed dot-paths (`'user.address.city'`) with autocompletion, plus validation at any path with the validator you already use: [Zod](https://zod.dev), [Valibot](https://valibot.dev), [ArkType](https://arktype.io), or any [Standard Schema](https://standardschema.dev) library.
 
-## Quick Start
+> ⚠️ Not yet published to npm — install from the repo for now:
+
+```
+pnpm add github:envindavsorg/safepath
+```
+
+- 🎯 **Full path autocompletion** — every valid dot-path of your type, inferred
+- 🛡️ **Actually safe** — hardened against prototype pollution (`__proto__`, `constructor`, `prototype` are rejected on write)
+- ✅ **Bring your own validator** — `validate`/`validateAndSet` accept any Standard Schema (Zod 3.24+, Valibot v1+, ArkType 2+, Effect Schema…)
+- 🧊 **Immutable mode** — copy-on-write with structural sharing (React-friendly, no deep clone)
+- 📦 **Zero dependencies** — ESM + CJS, ~8 KB unminified
+
+## Quick start
 
 ```typescript
-import { safePath, s } from 'ts-safe-path';
+import { safePath } from 'pathsafe';
 
 const data = {
 	user: {
@@ -20,115 +29,119 @@ const data = {
 		profile: {
 			address: { city: 'Paris', country: 'France' },
 		},
-		preferences: { theme: 'dark', notifications: true },
+		hobbies: ['coding', 'reading'],
 	},
 };
 
 const sp = safePath(data);
 
-// Get - full autocompletion and type inference
 sp.get('user.profile.address.city'); // "Paris" (type: string | undefined)
-
-// Set - type-checked values
-sp.set('user.name', 'Jane');
-
-// Has - check path existence
-sp.has('user.profile.address'); // true
-
-// Update - functional updates
-sp.update('user.name', (current) => current?.toUpperCase() ?? 'ANONYMOUS');
-
-// Delete - safe property removal
-sp.delete('user.preferences.theme');
-
-// Merge - deep merge preserving existing data
-sp.merge({ user: { preferences: { theme: 'light' } } });
-
-// Validate - schema validation
-const result = sp.validate('user.name', s.string().min(2));
-if (result.success) console.log(result.data);
+sp.get('user.hobbies.0');            // "coding" — arrays are typed too
+sp.get('user.hobbies.5', 'none');    // typed default when the value is missing
+sp.set('user.name', 'Jane');         // value type-checked against the path
+sp.has('user.profile.address');      // true
+sp.update('user.name', (n) => n?.toUpperCase() ?? 'ANONYMOUS');
+sp.delete('user.profile.address.country');
+sp.merge({ user: { profile: { address: { city: 'Lyon' } } } });
+sp.pick(['user.name', 'user.profile.address.city']);
+// { 'user.name': 'Jane', 'user.profile.address.city': 'Lyon' } — fully typed
 ```
 
-## Immutable Mode
+Paths autocomplete as you type, invalid paths are compile errors, and the value type is inferred from the path. Works with interfaces, type aliases, optional properties, arrays, tuples, and unions.
 
-All mutating operations support an `immutable` option that returns a new object, leaving the original unchanged:
+## Validate at a path — with your validator
+
+This is the part no other path library does: validate the value *at a typed path* using any [Standard Schema](https://standardschema.dev) validator. No adapter, no wrapper.
 
 ```typescript
-const original = { user: { name: 'John' } };
+import { safePath } from 'pathsafe';
+import { z } from 'zod';
+
+const sp = safePath(data);
+
+// Validate the current value at a path
+const result = sp.validate('user.profile.address.city', z.string().min(1));
+if (result.issues) {
+	console.log(result.issues.map((i) => i.message));
+} else {
+	result.value; // typed output
+}
+
+// Validate an incoming value, then set it — in one typed step
+sp.validateAndSet('user.name', input, z.string().min(2));
+// throws PathValidationError on failure (or pass { strict: false } to no-op)
+
+// Schema transforms are applied before setting
+sp.validateAndSet('user.name', '  Jane  ', z.string().transform((s) => s.trim()));
+```
+
+The exact same code works with Valibot, ArkType, or any other Standard Schema library:
+
+```typescript
+import * as v from 'valibot';
+
+sp.validate('user.profile.address.city', v.pipe(v.string(), v.minLength(1)));
+sp.validateAndSet('user.name', input, v.pipe(v.string(), v.trim()));
+```
+
+Async schemas (e.g. Zod `.refine(async …)`) are supported via `validateAsync` and `validateAndSetAsync`.
+
+### Validate several paths at once
+
+`validateAll` checks each path against its own schema and aggregates the issues by path — perfect for validating a form or a config object field by field, even mixing validator libraries:
+
+```typescript
+const result = sp.validateAll({
+	'user.name': z.string().min(2),
+	'user.profile.address.city': v.pipe(v.string(), v.minLength(1)), // Valibot here, why not
+});
+
+if (!result.success) {
+	result.issues; // { 'user.name': [...issues] } — only failing paths
+}
+```
+
+### Constrain paths by value type
+
+`PathsTo<T, V>` is the type of every path leading to a `V` — ideal for typed translation keys, form field bindings, or any API that only accepts certain value types:
+
+```typescript
+import type { PathsTo } from 'pathsafe';
+
+declare function bindNumericField(path: PathsTo<FormValues, number>): void;
+
+bindNumericField('user.age');  // ✔
+bindNumericField('user.name'); // ✘ compile error — leads to a string
+```
+
+## Immutable mode
+
+All mutating operations accept `{ immutable: true }` and return a new object using **copy-on-write**: only the nodes along the path are cloned, everything else keeps its reference — ideal for React state and memoization.
+
+```typescript
+const original = { user: { name: 'John' }, settings: { theme: 'dark' } };
 const sp = safePath(original);
 
 const updated = sp.set('user.name', 'Jane', { immutable: true });
 // original.user.name === "John"
 // updated.user.name === "Jane"
+// updated.settings === original.settings (untouched branch, same reference)
 ```
 
-Works with `set`, `delete`, `update`, and `merge`.
+Works with `set`, `delete`, `update`, `merge`, and `validateAndSet`. You can also make it the default: `safePath(obj, { immutable: true })`.
 
-## Schema Validation
+## Security
 
-Built-in validation with the `s` schema builder:
+`pathsafe` refuses to write through the prototype chain:
 
 ```typescript
-import { s } from 'ts-safe-path';
-
-// Primitives
-s.string(); // .min(n) .max(n) .email() .url() .regex(pattern)
-s.number(); // .min(n) .max(n) .int() .positive()
-s.boolean();
-
-// Composites
-s.array(s.string());
-s.object({ name: s.string(), age: s.number() });
-
-// Modifiers (available on all validators)
-s.string().optional(); // allows undefined
-s.string().nullable(); // allows null
-s.string().default('fallback'); // default for undefined/null
-s.string().transform((str) => str.trim()); // transform after validation
+sp.set('__proto__.isAdmin', true);   // throws TypeError
+sp.merge(JSON.parse(maliciousJson)); // __proto__ keys are skipped
 ```
 
-### Validate at a path
+Reads use own-property semantics (`Object.hasOwn`), so inherited properties like `toString` are never reachable through a path.
 
-```typescript
-const sp = safePath(data);
-
-// Validate value at path
-const result = sp.validate('user.email', s.string().email());
-if (!result.success) {
-	result.errors.forEach((e) => console.log(e.message));
-}
-
-// Validate and set in one step (throws on failure)
-sp.validateAndSet('user.age', 25, s.number().min(0).max(120));
-
-// Non-strict mode: returns original object on validation failure
-sp.validateAndSet('user.age', 'bad', s.number(), { strict: false });
-```
-
-### Standalone validation
-
-```typescript
-const schema = s.object({
-	name: s
-		.string()
-		.min(2)
-		.transform((n) => n.trim()),
-	email: s.string().email(),
-	age: s.number().min(13).optional(),
-});
-
-const result = schema.validate(inputData);
-if (result.success) {
-	// result.data is fully typed
-}
-
-// Or throw on failure
-const data = schema.parse(inputData);
-```
-
-## Utility Functions
-
-Use standalone functions without creating a `safePath` instance:
+## Standalone functions
 
 ```typescript
 import {
@@ -139,36 +152,56 @@ import {
 	isValidPath,
 	getAllPaths,
 	clearPathCache,
-} from 'ts-safe-path';
+} from 'pathsafe';
 
-getValueByPath(obj, 'user.name'); // get value
-setValueByPath(obj, 'user.name', 'Jane'); // set value
-hasPath(obj, 'user.name'); // check existence
-deletePath(obj, 'user.name'); // delete property
-isValidPath(obj, 'user.name'); // runtime path validation
-getAllPaths(obj); // discover all paths
-clearPathCache(); // clear internal path parsing cache
+getValueByPath(obj, 'user.name');
+setValueByPath(obj, 'user.name', 'Jane');
+hasPath(obj, 'user.name');
+deletePath(obj, 'user.name');
+isValidPath(obj, someString); // runtime check, narrows to a typed path
+getAllPaths(obj);             // every path present at runtime
 ```
 
-## API Reference
+## API reference
 
-### `safePath(obj, options?)`
+### `safePath(obj, defaultOptions?)`
 
-| Method                                          | Returns                             |
-| ----------------------------------------------- | ----------------------------------- |
-| `get(path)`                                     | `PathValue<T, P> \| undefined`      |
-| `set(path, value, options?)`                    | `T`                                 |
-| `has(path)`                                     | `boolean`                           |
-| `delete(path, options?)`                        | `T`                                 |
-| `update(path, fn, options?)`                    | `T`                                 |
-| `merge(partial, options?)`                      | `T`                                 |
-| `getAllPaths()`                                 | `PathKeys<T>[]`                     |
-| `isValidPath(path)`                             | `boolean`                           |
-| `validate(path, schema)`                        | `ValidationResult<PathValue<T, P>>` |
-| `validateAndSet(path, value, schema, options?)` | `T`                                 |
+| Method                                          | Returns                                  |
+| ----------------------------------------------- | ---------------------------------------- |
+| `get(path)`                                     | `PathValue<T, P> \| undefined`           |
+| `get(path, defaultValue)`                       | `PathValue<T, P> \| D`                   |
+| `set(path, value, options?)`                    | `T`                                      |
+| `has(path)`                                     | `boolean`                                |
+| `delete(path, options?)`                        | `T`                                      |
+| `update(path, fn, options?)`                    | `T`                                      |
+| `merge(partial, options?)`                      | `T`                                      |
+| `pick(paths)`                                   | `{ [K in P]: PathValue<T, K> \| undefined }` |
+| `getAllPaths()`                                 | `PathKeys<T>[]`                          |
+| `isValidPath(path)`                             | `path is PathKeys<T>`                    |
+| `validate(path, schema)`                        | `StandardSchemaV1.Result<Output>`        |
+| `validateAsync(path, schema)`                   | `Promise<StandardSchemaV1.Result<…>>`    |
+| `validateAll(schemas)`                          | `PathsValidationResult`                  |
+| `validateAndSet(path, value, schema, options?)` | `T`                                      |
+| `validateAndSetAsync(path, value, schema, options?)` | `Promise<T>`                       |
 
-**Options:** `{ immutable?: boolean }` for set/delete/update/merge.
-**ValidatedOptions:** Also accepts `{ strict?: boolean }` (default `true`, throws on failure).
+**Options:** `{ immutable?: boolean }` for mutating methods.
+**Validated options:** also `{ strict?: boolean }` (default `true` — throws `PathValidationError` on failure; `false` returns the object unchanged).
+
+### Exported types
+
+- `PathKeys<T, Depth = 10>` — union of every dot-path in `T` (bounded recursion; raise `Depth` for very deep types)
+- `PathValue<T, P>` — the type at path `P`
+- `PathsTo<T, V>` — every path in `T` whose value is assignable to `V`
+- `PathSchemas<T>` / `PathsValidationResult` — input and output of `validateAll`
+- `StandardSchemaV1` — the vendored Standard Schema interface
+- `PathValidationError` — thrown by `validateAndSet` in strict mode (`.path`, `.issues`)
+
+### Behavior notes
+
+- `delete` on an array index splices (no holes left behind).
+- `set` creates intermediate arrays for numeric segments (`'list.0.name'` creates `{ list: [{ name }] }`).
+- Built-in objects (`Date`, `RegExp`, `Map`, `Set`…) are leaves: paths never traverse into them.
+- Keys containing dots are not addressable (paths split on `.`).
 
 ## License
 

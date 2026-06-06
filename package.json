@@ -1,18 +1,33 @@
 {
-	"name": "@envindavsorg/ts-safe-path",
-	"version": "1.0.10",
-	"description": "Type-safe nested object access and manipulation for TypeScript 🚀",
+	"name": "pathsafe",
+	"version": "2.0.0",
+	"description": "Type-safe nested object access for TypeScript — typed dot-paths with validation by any Standard Schema library (Zod, Valibot, ArkType…)",
 	"packageManager": "pnpm@10.28.2",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"type": "module",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.cts",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"sideEffects": false,
 	"scripts": {
-		"build": "tsc",
+		"build": "tsup",
 		"typecheck": "tsc --noEmit",
-		"test": "jest",
-		"test:watch": "jest --watch",
-		"prepublishOnly": "npm run build && npm test",
-		"lint": "oxlint",
-		"lint:fix": "oxlint --fix",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"prepublishOnly": "pnpm build && pnpm test",
+		"lint": "oxlint src tests",
+		"lint:fix": "oxlint --fix src tests",
 		"format": "oxfmt --write src tests",
 		"format:check": "oxfmt src tests"
 	},
@@ -22,45 +37,42 @@
 		"object",
 		"nested",
 		"path",
-		"lodash",
+		"dot-notation",
 		"get",
 		"set",
+		"standard-schema",
+		"validation",
+		"zod",
+		"valibot",
+		"arktype",
 		"utility"
 	],
 	"author": "Cuzeac Florin",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/envindavsorg/ts-safe-path.git"
-	},
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com"
+		"url": "https://github.com/envindavsorg/safepath.git"
 	},
 	"bugs": {
-		"url": "https://github.com/envindavsorg/ts-safe-path/issues"
+		"url": "https://github.com/envindavsorg/safepath/issues"
 	},
-	"homepage": "https://github.com/envindavsorg/ts-safe-path#readme",
+	"homepage": "https://github.com/envindavsorg/safepath#readme",
 	"devDependencies": {
-		"@types/jest": "^29.5.14",
-		"jest": "^29.7.0",
 		"oxfmt": "^0.41.0",
 		"oxlint": "^1.56.0",
-		"ts-jest": "^29.4.6",
-		"typescript": "^5.9.3"
+		"tsup": "^8.5.1",
+		"typescript": "^5.9.3",
+		"valibot": "^1.4.1",
+		"vitest": "^4.1.8",
+		"zod": "^4.4.3"
 	},
 	"files": [
 		"dist",
 		"README.md",
+		"CHANGELOG.md",
 		"LICENSE"
 	],
 	"engines": {
 		"node": ">=18.0.0"
-	},
-	"jest": {
-		"preset": "ts-jest",
-		"testEnvironment": "node",
-		"testMatch": [
-			"**/tests/**/*.test.ts"
-		]
 	}
 }
